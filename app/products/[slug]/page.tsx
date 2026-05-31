@@ -56,7 +56,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
               href={product.actionUrl}
               className="inline-flex items-center gap-2 bg-accent text-white text-sm font-medium px-5 py-2.5 hover:opacity-90 transition-opacity"
             >
-              Run audit →
+              {product.ctaLabel ?? 'Open →'}
             </Link>
           ) : (
             <span className="inline-flex items-center gap-2 border border-gray-200 text-gray-400 text-sm font-medium px-5 py-2.5 cursor-not-allowed">

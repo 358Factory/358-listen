@@ -33,10 +33,16 @@ export default function HomePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-200 border border-gray-200">
           {products.map((product) => {
             const isLive = product.status === 'live'
+            const href = isLive && product.actionUrl
+              ? product.actionUrl
+              : `/products/${product.slug}`
+            const cta = isLive
+              ? (product.ctaLabel ?? 'Open →')
+              : 'View details →'
             return (
               <Link
                 key={product.id}
-                href={`/products/${product.slug}`}
+                href={href}
                 className="block bg-white hover:bg-gray-50 transition-colors"
               >
                 <div className="p-6 flex flex-col gap-4 h-full">
@@ -64,9 +70,7 @@ export default function HomePage() {
                     </p>
                   </div>
 
-                  <span className="text-xs font-medium text-accent">
-                    {isLive ? 'Run audit →' : 'View details →'}
-                  </span>
+                  <span className="text-xs font-medium text-accent">{cta}</span>
                 </div>
               </Link>
             )
@@ -76,7 +80,7 @@ export default function HomePage() {
 
       <footer className="border-t border-gray-200 mt-24">
         <div className="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
-          <span className="text-xs text-gray-400">© 2025 358</span>
+          <span className="text-xs text-gray-400">© 2026 358</span>
           <span className="text-xs text-gray-400">Helsinki</span>
         </div>
       </footer>

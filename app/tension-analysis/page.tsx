@@ -6,8 +6,8 @@ import Link from 'next/link'
 interface FormState {
   brand: string
   category: string
-  competitors: string
   vertical: string
+  research: string
   focusArea: string
 }
 
@@ -16,11 +16,9 @@ interface Section {
   content: string
 }
 
-// Split streamed text into section objects on ## boundaries
 function parseSections(text: string): Section[] {
   const sections: Section[] = []
   let current: Section | null = null
-
   for (const line of text.split('\n')) {
     if (line.startsWith('## ')) {
       if (current) sections.push(current)
@@ -68,6 +66,10 @@ function renderContent(text: string) {
       listBuffer.push(line.slice(2))
       continue
     }
+    if (/^\d+\.\s/.test(line)) {
+      listBuffer.push(line.replace(/^\d+\.\s/, ''))
+      continue
+    }
     if (line.trim() === '') {
       flushList()
       continue
@@ -81,8 +83,11 @@ function renderContent(text: string) {
         </p>
       )
     } else {
+      // Quoted language — style differently
+      const isQuote = line.startsWith('"') || line.startsWith('“')
       elements.push(
-        <p key={key++} className="text-sm text-gray-700 leading-relaxed mt-2 first:mt-0"
+        <p key={key++}
+          className={`text-sm leading-relaxed mt-2 first:mt-0 ${isQuote ? 'text-gray-900 italic pl-3 border-l-2 border-gray-200' : 'text-gray-700'}`}
           dangerouslySetInnerHTML={{ __html: inlineBold(line) }}
         />
       )
@@ -97,23 +102,14 @@ function inlineBold(text: string): string {
   return text.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
 }
 
-// Section number → short label for the card badge
-const SECTION_LABELS: Record<string, string> = {
-  'Competitor Positioning Summaries': '01',
-  'Overused Claims and Category Clichés': '02',
-  'Tone-of-Voice Patterns': '03',
-  'Whitespace Opportunities': '04',
-  'Strategic Recommendation': '05',
-}
-
 const VERTICALS = ['Marketing Communication', 'Brand & Experience', 'Products & Services']
 
-export default function AuditPage() {
+export default function TensionAnalysisPage() {
   const [form, setForm] = useState<FormState>({
     brand: '',
     category: '',
-    competitors: '',
     vertical: 'Marketing Communication',
+    research: '',
     focusArea: '',
   })
   const [output, setOutput] = useState('')
@@ -134,7 +130,7 @@ export default function AuditPage() {
     setError('')
 
     try {
-      const response = await fetch('/api/audit', {
+      const response = await fetch('/api/tension', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -162,7 +158,7 @@ export default function AuditPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const canSubmit = form.brand.trim() && form.category.trim() && form.competitors.trim() && !isLoading
+  const canSubmit = form.brand.trim() && form.category.trim() && form.research.trim() && !isLoading
   const sections = parseSections(output)
 
   return (
@@ -173,7 +169,7 @@ export default function AuditPage() {
             ← 358 Listen
           </Link>
           <span className="text-xs text-gray-400 uppercase tracking-widest">
-            01 / Competitive Landscape Audit
+            02 / Audience Tension & Needs Analysis
           </span>
         </div>
       </header>
@@ -181,10 +177,10 @@ export default function AuditPage() {
       <main className="max-w-3xl mx-auto px-6 py-12">
         <div className="mb-10">
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 mb-2">
-            Competitive Landscape Audit
+            Audience Tension & Needs Analysis
           </h1>
           <p className="text-sm text-gray-500">
-            Map the competitive field. Find the whitespace. Fill in the brief below.
+            Surface what audiences signal, not just what they say. Paste your research below.
           </p>
         </div>
 
@@ -192,19 +188,13 @@ export default function AuditPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="Brand / client name" required>
               <input type="text" name="brand" value={form.brand} onChange={handleChange}
-                placeholder="e.g. Fazer" required className="input" />
+                placeholder="e.g. Oura" required className="input" />
             </Field>
             <Field label="Category or industry" required>
               <input type="text" name="category" value={form.category} onChange={handleChange}
-                placeholder="e.g. Premium confectionery" required className="input" />
+                placeholder="e.g. Health technology" required className="input" />
             </Field>
           </div>
-
-          <Field label="Competitors" hint="Comma-separated, 3–6 names" required>
-            <textarea name="competitors" value={form.competitors} onChange={handleChange}
-              placeholder="e.g. Marabou, Lindt, Karl Fazer, Panda, Cloetta"
-              required rows={2} className="input resize-none" />
-          </Field>
 
           <Field label="Vertical" required>
             <select name="vertical" value={form.vertical} onChange={handleChange} className="input">
@@ -212,10 +202,26 @@ export default function AuditPage() {
             </select>
           </Field>
 
-          <Field label="Focus area" hint="Optional — any specific angles to investigate">
-            <textarea name="focusArea" value={form.focusArea} onChange={handleChange}
-              placeholder="e.g. sustainability claims, Gen Z targeting, premium pricing narratives"
-              rows={2} className="input resize-none" />
+          <Field
+            label="Research input"
+            hint="Required"
+            required
+          >
+            <textarea
+              name="research"
+              value={form.research}
+              onChange={handleChange}
+              placeholder="Paste your research — interview transcripts, customer feedback, reviews, survey responses, support tickets, or any raw customer data"
+              required
+              rows={10}
+              className="input resize-y"
+            />
+          </Field>
+
+          <Field label="Focus" hint="Optional — any specific tensions or themes to investigate">
+            <input type="text" name="focusArea" value={form.focusArea} onChange={handleChange}
+              placeholder="e.g. sleep anxiety, premium pricing resistance, trust signals"
+              className="input" />
           </Field>
 
           <button type="submit" disabled={!canSubmit}
@@ -223,9 +229,9 @@ export default function AuditPage() {
             {isLoading ? (
               <>
                 <span className="inline-block w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
-                Running audit…
+                Running analysis…
               </>
-            ) : 'Run audit →'}
+            ) : 'Run analysis →'}
           </button>
         </form>
 
@@ -235,26 +241,23 @@ export default function AuditPage() {
           </div>
         )}
 
-        {/* Loading state before first section arrives */}
         {isLoading && sections.length === 0 && (
           <div className="flex items-center gap-3 text-sm text-gray-400 py-8">
             <span className="inline-block w-3 h-3 border border-gray-300 border-t-accent rounded-full animate-spin" />
-            Analysing competitors…
+            Reading research…
           </div>
         )}
 
-        {/* Section cards */}
         {sections.length > 0 && (
           <div className="space-y-4">
             {sections.map((section, i) => {
               const isLast = i === sections.length - 1
-              const badge = SECTION_LABELS[section.title]
               return (
                 <div key={i} className="border border-gray-200">
                   <div className="flex items-center gap-3 px-5 py-3 border-b border-gray-100 bg-gray-50">
-                    {badge && (
-                      <span className="text-xs font-mono text-gray-400">{badge}</span>
-                    )}
+                    <span className="text-xs font-mono text-gray-400">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
                     <h2 className="text-xs font-bold uppercase tracking-widest text-accent">
                       {section.title}
                     </h2>
@@ -271,7 +274,7 @@ export default function AuditPage() {
 
             {isDone && (
               <div className="flex items-center justify-between pt-2">
-                <span className="text-xs text-gray-400">Audit complete</span>
+                <span className="text-xs text-gray-400">Analysis complete</span>
                 <button onClick={handleCopy}
                   className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
                   {copied ? 'Copied ✓' : 'Copy to clipboard'}

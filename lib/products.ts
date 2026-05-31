@@ -15,6 +15,7 @@ export interface Product {
     ps: string
   }
   actionUrl?: string
+  ctaLabel?: string
 }
 
 export const products: Product[] = [
@@ -26,6 +27,7 @@ export const products: Product[] = [
     description: 'Map the competitive field. Find the whitespace.',
     status: 'live',
     actionUrl: '/audit',
+    ctaLabel: 'Run audit →',
     whatItDoes:
       'A systematic AI-powered read of how competitors position themselves — what they claim, what language they use, and where the real whitespace is. Covers messaging, tone, cultural codes, and saturation zones.',
     aiDoes: [
@@ -57,7 +59,9 @@ export const products: Product[] = [
     name: 'Audience Tension & Needs Analysis',
     slug: 'audience-tension-needs-analysis',
     description: 'Surface what audiences signal, not just what they say.',
-    status: 'coming-soon',
+    status: 'live',
+    actionUrl: '/tension-analysis',
+    ctaLabel: 'Run analysis →',
     whatItDoes:
       'A deep read of what real people think, feel, and struggle with — using AI-moderated interviews, qualitative research synthesis, and behavioral data. Goes beyond stated preferences to surface emotional drivers, unmet needs, and decision anxieties.',
     aiDoes: [
