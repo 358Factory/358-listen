@@ -128,7 +128,9 @@ export const products: Product[] = [
     name: 'Synthetic Audience Model',
     slug: 'synthetic-audience-model',
     description: 'Build a research-backed audience you can query.',
-    status: 'coming-soon',
+    status: 'live',
+    actionUrl: '/audience-model',
+    ctaLabel: 'Build model →',
     whatItDoes:
       'AI-built audience personas grounded in real interview and behavioral data — not demographic assumptions. Each persona can be actively queried and tested against new ideas, concepts, messages, or product directions before anything is built or spent.',
     aiDoes: [
