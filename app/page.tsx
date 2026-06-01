@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { products } from '@/lib/products'
 
 export default function HomePage() {
+  // Pad to 6 cells so the grid always looks complete
+  const cells = [...products, null]
+
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-200">
@@ -26,24 +29,43 @@ export default function HomePage() {
             Intelligence products
           </p>
           <h2 className="text-xl font-medium text-gray-900">
-            Strategic tools for creative work that doesn't guess.
+            Strategic tools for creative work that doesn&apos;t guess.
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-200 border border-gray-200">
-          {products.map((product) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {cells.map((product, idx) => {
+            if (!product) {
+              return (
+                <div
+                  key="placeholder"
+                  className="border border-dashed border-gray-200 p-6 flex flex-col gap-4"
+                >
+                  <span className="text-xs font-mono text-gray-300">—</span>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      More intelligence products in development.
+                    </p>
+                  </div>
+                </div>
+              )
+            }
+
             const isLive = product.status === 'live'
             const href = isLive && product.actionUrl
               ? product.actionUrl
               : `/products/${product.slug}`
-            const cta = isLive
-              ? (product.ctaLabel ?? 'Open →')
-              : 'View details →'
+            const cta = isLive ? (product.ctaLabel ?? 'Open →') : 'View details →'
+
             return (
               <Link
                 key={product.id}
                 href={href}
-                className="block bg-white hover:bg-gray-50 transition-colors"
+                className={`group block border transition-all duration-150 hover:-translate-y-0.5 ${
+                  isLive
+                    ? 'border-l-[3px] border-l-accent border-t border-r border-b border-gray-200 hover:border-gray-300 hover:border-l-accent'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
               >
                 <div className="p-6 flex flex-col gap-4 h-full">
                   <div className="flex items-start justify-between gap-4">
@@ -70,7 +92,9 @@ export default function HomePage() {
                     </p>
                   </div>
 
-                  <span className="text-xs font-medium text-accent">{cta}</span>
+                  <span className={`text-xs font-medium transition-colors ${isLive ? 'text-accent' : 'text-gray-400'}`}>
+                    {cta}
+                  </span>
                 </div>
               </Link>
             )

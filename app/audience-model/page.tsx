@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import ToolNav from '@/components/ToolNav'
+import { parseSections, renderContent, inlineBold } from '@/lib/output'
 
 interface BuildForm {
   brand: string
@@ -11,33 +13,11 @@ interface BuildForm {
   personaCount: string
 }
 
-interface Section {
-  title: string
-  content: string
-}
-
 interface PersonaField {
   key: string
   value: string
 }
 
-// Split streamed text into blocks on ## boundaries
-function parseSections(text: string): Section[] {
-  const sections: Section[] = []
-  let current: Section | null = null
-  for (const line of text.split('\n')) {
-    if (line.startsWith('## ')) {
-      if (current) sections.push(current)
-      current = { title: line.slice(3).trim(), content: '' }
-    } else if (current) {
-      current.content += line + '\n'
-    }
-  }
-  if (current) sections.push(current)
-  return sections
-}
-
-// Parse "Name, Age — Role" title into parts
 function parsePersonaTitle(title: string) {
   const dashIdx = title.indexOf(' — ')
   const nameAge = dashIdx > -1 ? title.slice(0, dashIdx).trim() : title
@@ -45,12 +25,10 @@ function parsePersonaTitle(title: string) {
   return { nameAge, role }
 }
 
-// Parse **Key:** value lines into field objects
 function parsePersonaFields(content: string): PersonaField[] {
   const fields: PersonaField[] = []
   let currentKey = ''
   let currentValue = ''
-
   for (const line of content.split('\n')) {
     const match = line.match(/^\*\*(.+?):\*\*\s*(.*)/)
     if (match) {
@@ -65,7 +43,6 @@ function parsePersonaFields(content: string): PersonaField[] {
   return fields
 }
 
-// Render a query response section (plain prose)
 function renderQueryContent(content: string) {
   const elements: React.ReactNode[] = []
   let key = 0
@@ -79,12 +56,7 @@ function renderQueryContent(content: string) {
   return elements
 }
 
-function inlineBold(text: string) {
-  return text.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
-}
-
-const VERTICALS = ['Marketing Communication', 'Brand & Experience', 'Products & Services']
-const PERSONA_COUNTS = ['3', '4', '5']
+const PERSONA_BORDER_COLORS = ['#534AB7', '#7B6DC4', '#9B8FD1', '#443D96', '#6B5EC0']
 
 const FIELD_LABELS: Record<string, string> = {
   'Core motivation': 'Core motivation',
@@ -94,6 +66,9 @@ const FIELD_LABELS: Record<string, string> = {
   'What puts them off': 'Turned off by',
   'Their voice': 'Their voice',
 }
+
+const VERTICALS = ['Marketing Communication', 'Brand & Experience', 'Products & Services']
+const PERSONA_COUNTS = ['3', '4', '5']
 
 export default function AudienceModelPage() {
   const [form, setForm] = useState<BuildForm>({
@@ -129,7 +104,6 @@ export default function AudienceModelPage() {
     setQueryText('')
     setQueryDone(false)
     setQueryQuestion('')
-
     try {
       const response = await fetch('/api/personas', {
         method: 'POST',
@@ -137,7 +111,6 @@ export default function AudienceModelPage() {
         body: JSON.stringify(form),
       })
       if (!response.ok) throw new Error(`Request failed: ${response.status}`)
-
       const reader = response.body!.getReader()
       const decoder = new TextDecoder()
       while (true) {
@@ -163,7 +136,6 @@ export default function AudienceModelPage() {
     setQueryDone(false)
     setQueryError('')
     setIsQuerying(true)
-
     try {
       const response = await fetch('/api/personas/query', {
         method: 'POST',
@@ -171,7 +143,6 @@ export default function AudienceModelPage() {
         body: JSON.stringify({ query: question, personas: personasText }),
       })
       if (!response.ok) throw new Error(`Request failed: ${response.status}`)
-
       const reader = response.body!.getReader()
       const decoder = new TextDecoder()
       while (true) {
@@ -201,31 +172,37 @@ export default function AudienceModelPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            ← 358 Listen
-          </Link>
-          <span className="text-xs text-gray-400 uppercase tracking-widest">
-            04 / Synthetic Audience Model
-          </span>
+        <div className="max-w-3xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-1">
+            <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+              ← 358 Listen
+            </Link>
+          </div>
+          <ToolNav />
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-12">
-
-        {/* ── STEP 1 ─────────────────────────────────────── */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-xs font-mono text-gray-400 border border-gray-200 px-2 py-0.5">Step 1</span>
+        {/* Page header */}
+        <div className="relative pb-8 mb-8 border-b border-gray-200 overflow-hidden">
+          <span aria-hidden className="absolute right-0 top-0 text-[9rem] font-black text-gray-900/[0.035] select-none leading-none pointer-events-none">
+            04
+          </span>
+          <div className="relative">
+            <span className="text-xs font-mono text-gray-400 mb-3 block">04</span>
+            <div className="flex items-center gap-3 mb-1">
+              <span className="text-xs font-mono text-gray-400 border border-gray-200 px-2 py-0.5">Step 1</span>
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-900 mb-2">
+              Build the personas
+            </h1>
+            <p className="text-sm text-gray-500">
+              Describe your audience. The richer the input, the sharper the personas.
+            </p>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 mb-2">
-            Build the personas
-          </h1>
-          <p className="text-sm text-gray-500">
-            Describe your target audience and paste in any research you have. The richer the input, the sharper the personas.
-          </p>
         </div>
 
+        {/* Build form */}
         <form onSubmit={handleBuild} className="space-y-5 mb-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="Brand / client name" required>
@@ -252,15 +229,9 @@ export default function AudienceModelPage() {
           </div>
 
           <Field label="Audience description" required>
-            <textarea
-              name="audienceDescription"
-              value={form.audienceDescription}
-              onChange={handleChange}
+            <textarea name="audienceDescription" value={form.audienceDescription} onChange={handleChange}
               placeholder="Describe your target audience — who they are, what they care about, what they struggle with. Paste in research, tensions, or language from the Audience Tension Analysis if you have it."
-              required
-              rows={8}
-              className="input resize-y"
-            />
+              required rows={8} className="input resize-y" />
           </Field>
 
           <button type="submit" disabled={!canBuild}
@@ -275,12 +246,10 @@ export default function AudienceModelPage() {
         </form>
 
         {buildError && (
-          <div className="border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-8">
-            {buildError}
-          </div>
+          <div className="border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-8">{buildError}</div>
         )}
 
-        {/* Persona cards */}
+        {/* Spinner before first persona arrives */}
         {isBuilding && personas.length === 0 && (
           <div className="flex items-center gap-3 text-sm text-gray-400 py-8">
             <span className="inline-block w-3 h-3 border border-gray-300 border-t-accent rounded-full animate-spin" />
@@ -288,35 +257,39 @@ export default function AudienceModelPage() {
           </div>
         )}
 
+        {/* Persona cards */}
         {personas.length > 0 && (
-          <div className="space-y-4 mb-4">
+          <div className="space-y-5 mb-4">
             {personas.map((persona, i) => {
               const isLast = i === personas.length - 1
               const { nameAge, role } = parsePersonaTitle(persona.title)
               const fields = parsePersonaFields(persona.content)
               const voiceField = fields.find(f => f.key === 'Their voice')
               const otherFields = fields.filter(f => f.key !== 'Their voice')
-              const isStreaming = isLast && isBuilding
+              const borderColor = PERSONA_BORDER_COLORS[i % PERSONA_BORDER_COLORS.length]
 
               return (
-                <div key={i} className="border border-gray-200">
+                <div key={i} className="border border-gray-200 overflow-hidden animate-card-enter"
+                  style={{ borderTopColor: borderColor, borderTopWidth: '3px' }}>
                   {/* Persona header */}
-                  <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-gray-100 bg-gray-50">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{nameAge}</p>
-                      {role && <p className="text-xs text-gray-500 mt-0.5">{role}</p>}
+                  <div className="px-6 py-5 bg-gray-50 border-b border-gray-100">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-base font-semibold text-gray-900 leading-tight">{nameAge}</p>
+                        {role && <p className="text-xs text-gray-500 mt-1">{role}</p>}
+                      </div>
+                      <span className="text-xs font-mono text-gray-400 shrink-0 mt-0.5">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
                     </div>
-                    <span className="text-xs font-mono text-gray-400 shrink-0">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
                   </div>
 
-                  {/* Fields */}
+                  {/* Labeled fields */}
                   {otherFields.length > 0 && (
                     <div className="divide-y divide-gray-100">
                       {otherFields.map((field, j) => (
-                        <div key={j} className="px-5 py-3 grid grid-cols-[140px_1fr] gap-4 items-start">
-                          <dt className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-0.5 shrink-0">
+                        <div key={j} className="px-6 py-3.5 grid grid-cols-[148px_1fr] gap-4 items-start">
+                          <dt className="text-xs font-semibold uppercase tracking-widest text-gray-400 pt-0.5 shrink-0">
                             {FIELD_LABELS[field.key] ?? field.key}
                           </dt>
                           <dd className="text-sm text-gray-700 leading-relaxed"
@@ -326,18 +299,18 @@ export default function AudienceModelPage() {
                     </div>
                   )}
 
-                  {/* Quote */}
+                  {/* Pullquote */}
                   {voiceField && (
-                    <div className="px-5 py-4 border-t border-gray-100 bg-gray-50">
-                      <p className="text-sm text-gray-900 italic leading-relaxed">
+                    <div className="px-6 py-6 border-t border-gray-100 bg-gray-50">
+                      <p className="text-base italic text-gray-900 leading-relaxed font-medium">
                         {voiceField.value}
                       </p>
                     </div>
                   )}
 
-                  {/* Streaming cursor on last incomplete card */}
-                  {isStreaming && !voiceField && (
-                    <div className="px-5 py-3">
+                  {/* Streaming cursor */}
+                  {isLast && isBuilding && !voiceField && (
+                    <div className="px-6 py-4">
                       <span className="inline-block w-0.5 h-4 bg-accent animate-pulse" />
                     </div>
                   )}
@@ -347,49 +320,43 @@ export default function AudienceModelPage() {
           </div>
         )}
 
-        {/* ── STEP 2 ─────────────────────────────────────── */}
+        {/* Step 2 divider */}
         {buildDone && (
           <>
-            <div className="relative my-12">
+            <div className="relative my-14">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200" />
               </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white px-4 text-xs font-mono text-gray-400 uppercase tracking-widest">
-                  Step 2
+              <div className="relative flex justify-start">
+                <span className="bg-white pr-4 text-xs font-mono text-gray-400 uppercase tracking-widest">
+                  Step 2 — Query the room
                 </span>
               </div>
             </div>
 
             <div className="mb-8">
               <h2 className="text-xl font-semibold tracking-tight text-gray-900 mb-2">
-                Query the room
+                Test your ideas against the personas
               </h2>
               <p className="text-sm text-gray-500">
-                Test an idea, message, or concept. Each persona responds in character.
+                Enter a message, concept, or campaign idea. Each persona responds in character.
               </p>
             </div>
 
             <form onSubmit={handleQuery} className="flex gap-3 mb-8">
-              <input
-                type="text"
-                value={queryInput}
-                onChange={(e) => setQueryInput(e.target.value)}
-                placeholder={`e.g. "We track your sleep so you don't have to think about it."`}
-                className="input flex-1"
-              />
+              <input type="text" value={queryInput} onChange={(e) => setQueryInput(e.target.value)}
+                placeholder="e.g. a campaign headline, product concept, or brand message"
+                className="input flex-1" />
               <button type="submit" disabled={!canQuery}
                 className="shrink-0 inline-flex items-center gap-2 bg-accent text-white text-sm font-medium px-5 py-2.5 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">
-                {isQuerying ? (
-                  <span className="inline-block w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
-                ) : 'Ask the room →'}
+                {isQuerying
+                  ? <span className="inline-block w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                  : 'Ask the room →'}
               </button>
             </form>
 
             {queryError && (
-              <div className="border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-6">
-                {queryError}
-              </div>
+              <div className="border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-6">{queryError}</div>
             )}
 
             {isQuerying && queryResponses.length === 0 && (
@@ -402,23 +369,21 @@ export default function AudienceModelPage() {
             {queryResponses.length > 0 && (
               <div className="space-y-3">
                 {queryQuestion && (
-                  <div className="flex items-start gap-3 mb-5 pb-5 border-b border-gray-100">
-                    <span className="text-xs font-mono text-gray-400 shrink-0 mt-0.5">Q</span>
-                    <p className="text-sm text-gray-900 font-medium">{queryQuestion}</p>
+                  <div className="flex items-start gap-3 mb-6 pb-5 border-b border-gray-100">
+                    <span className="text-xs font-mono text-gray-400 shrink-0 mt-0.5 border border-gray-200 px-1.5 py-0.5">Q</span>
+                    <p className="text-sm text-gray-900 font-medium leading-relaxed">{queryQuestion}</p>
                   </div>
                 )}
 
                 {queryResponses.map((res, i) => {
                   const isLast = i === queryResponses.length - 1
+                  const borderColor = PERSONA_BORDER_COLORS[i % PERSONA_BORDER_COLORS.length]
                   return (
-                    <div key={i} className="border border-gray-200">
+                    <div key={i} className="border border-gray-200 overflow-hidden animate-card-enter"
+                      style={{ borderLeftColor: borderColor, borderLeftWidth: '3px' }}>
                       <div className="flex items-center gap-3 px-5 py-3 border-b border-gray-100 bg-gray-50">
-                        <span className="text-xs font-mono text-gray-400">
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-accent">
-                          {res.title}
-                        </h3>
+                        <span className="text-xs font-mono text-gray-400">{String(i + 1).padStart(2, '0')}</span>
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-accent">{res.title}</h3>
                       </div>
                       <div className="px-5 py-4">
                         {renderQueryContent(res.content)}
@@ -446,9 +411,7 @@ export default function AudienceModelPage() {
 
       <footer className="border-t border-gray-200 mt-16">
         <div className="max-w-3xl mx-auto px-6 py-6 flex items-center justify-between">
-          <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-            ← All products
-          </Link>
+          <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">← All products</Link>
           <span className="text-xs text-gray-400">358 Listen</span>
         </div>
       </footer>
@@ -457,10 +420,7 @@ export default function AudienceModelPage() {
 }
 
 function Field({ label, hint, required, children }: {
-  label: string
-  hint?: string
-  required?: boolean
-  children: React.ReactNode
+  label: string; hint?: string; required?: boolean; children: React.ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5">
