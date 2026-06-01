@@ -95,7 +95,9 @@ export const products: Product[] = [
     name: 'Behavioral Friction Mapping',
     slug: 'behavioral-friction-mapping',
     description: 'Locate where and why audiences stop.',
-    status: 'coming-soon',
+    status: 'live',
+    actionUrl: '/friction-mapping',
+    ctaLabel: 'Map friction →',
     whatItDoes:
       'An evidence-based map of where people stall, drop off, or find workarounds — whether that\'s a purchase funnel, a product flow, a brand touchpoint, or a service experience.',
     aiDoes: [
@@ -163,7 +165,9 @@ export const products: Product[] = [
     name: 'Cultural Signal Scan',
     slug: 'cultural-signal-scan',
     description: 'Detect cultural shifts before they go mainstream.',
-    status: 'coming-soon',
+    status: 'live',
+    actionUrl: '/cultural-scan',
+    ctaLabel: 'Run scan →',
     whatItDoes:
       'A continuous read of what is shifting in culture — emerging narratives, discourse changes, generational attitude shifts, and category norm changes — before they become mainstream.',
     aiDoes: [
